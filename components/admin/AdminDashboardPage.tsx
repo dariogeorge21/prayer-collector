@@ -3,9 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute'
 import { useAdmin } from '@/contexts/AdminContext'
+import { useAdminStats } from '@/hooks/use-admin-stats'
 import { BackgroundLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Shield,
   Users,
@@ -17,7 +19,14 @@ import {
   Calendar,
   UserPlus,
   Trash2,
+  UserCheck,
+  Sparkles,
+  Church,
+  Clock,
+  RefreshCw,
+  TrendingUp,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export function AdminDashboardPage() {
   return (
@@ -30,11 +39,68 @@ export function AdminDashboardPage() {
 function AdminDashboardContent() {
   const router = useRouter()
   const { session, logout } = useAdmin()
+  const { stats, isLoading: statsLoading, isValidating, refresh: refreshStats } = useAdminStats()
 
   const handleLogout = () => {
     logout()
     router.push('/')
   }
+
+  // Stats cards configuration
+  const statCards = [
+    {
+      title: 'Total Users',
+      value: stats.totalUsers,
+      icon: Users,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+    },
+    {
+      title: 'Active Today',
+      value: stats.activeUsersToday,
+      icon: UserCheck,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+    },
+    {
+      title: 'Rosaries This Month',
+      value: stats.rosariesThisMonth,
+      icon: Sparkles,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+    },
+    {
+      title: 'Masses This Month',
+      value: stats.massesThisMonth,
+      icon: Church,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+    },
+    {
+      title: 'Prayer Hours',
+      value: stats.prayerHoursThisMonth,
+      subtitle: `${stats.prayerMinutesThisMonth % 60}m`,
+      icon: Clock,
+      color: 'text-rose-600',
+      bgColor: 'bg-rose-50',
+      borderColor: 'border-rose-200',
+    },
+    {
+      title: 'Avg. per User',
+      value: stats.totalUsers > 0 
+        ? Math.round(stats.prayerMinutesThisMonth / stats.totalUsers) 
+        : 0,
+      subtitle: 'min/month',
+      icon: TrendingUp,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
+      borderColor: 'border-teal-200',
+    },
+  ]
 
   const adminFeatures = [
     {
@@ -126,6 +192,70 @@ function AdminDashboardContent() {
             </p>
           </div>
         </header>
+
+        {/* Stats Overview Section */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Stats Overview
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshStats}
+              disabled={isValidating}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <RefreshCw className={cn("h-4 w-4 mr-2", isValidating && "animate-spin")} />
+              {isValidating ? 'Updating...' : 'Refresh'}
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {statCards.map((stat) => (
+              <Card 
+                key={stat.title} 
+                className={cn(
+                  "relative overflow-hidden transition-all hover:shadow-md",
+                  stat.borderColor,
+                  "border-l-4"
+                )}
+              >
+                <CardContent className="p-4">
+                  {statsLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-8 w-16" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">{stat.title}</p>
+                        <div className="flex items-baseline gap-1">
+                          <p className={cn("text-3xl font-bold", stat.color)}>
+                            {stat.value.toLocaleString()}
+                          </p>
+                          {stat.subtitle && (
+                            <span className="text-sm text-gray-400">{stat.subtitle}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className={cn("p-3 rounded-full", stat.bgColor)}>
+                        <stat.icon className={cn("h-6 w-6", stat.color)} />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Month indicator */}
+          <p className="mt-3 text-xs text-gray-400 text-center">
+            Monthly stats for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </p>
+        </section>
 
         {/* Admin Features Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
