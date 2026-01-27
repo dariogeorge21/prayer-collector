@@ -73,6 +73,14 @@ export function UserSelectionPage() {
       <div className="flex min-h-[90vh] flex-col animate-fade-in-up">
         {/* Header */}
         <header className="mb-8 text-center">
+          <div className="flex justify-end mb-2">
+            <a 
+              href="/admin" 
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Admin
+            </a>
+          </div>
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
             <span className="inline-block animate-bounce-subtle">✝️</span> Faith Tracker
           </h1>
@@ -126,6 +134,13 @@ export function UserSelectionPage() {
             )}
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="mt-8 py-6 text-center border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            Jesus Youth Pala Campus Ministry
+          </p>
+        </footer>
       </div>
     </BackgroundLayout>
   )
