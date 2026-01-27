@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Plus, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,27 +26,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { supabase } from '@/lib/supabase'
+import { createUserSchema, type CreateUserInput } from '@/lib/validations'
 import type { User } from '@/lib/database.types'
-
-// Zod validation schema
-const newUserSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must be less than 50 characters')
-    .trim()
-    .refine((val) => /^[a-zA-Z\s'-]+$/.test(val), {
-      message: 'Name can only contain letters, spaces, hyphens, and apostrophes',
-    }),
-  email: z
-    .string()
-    .email('Please enter a valid email address')
-    .optional()
-    .or(z.literal('')),
-})
-
-type NewUserFormData = z.infer<typeof newUserSchema>
 
 interface NewUserModalProps {
   onUserCreated: (user: User) => void
@@ -60,15 +40,15 @@ export function NewUserModal({ onUserCreated }: NewUserModalProps) {
   const [showSuccess, setShowSuccess] = useState(false)
   const [createdUser, setCreatedUser] = useState<User | null>(null)
 
-  const form = useForm<NewUserFormData>({
-    resolver: zodResolver(newUserSchema),
+  const form = useForm<CreateUserInput>({
+    resolver: zodResolver(createUserSchema),
     defaultValues: {
       name: '',
       email: '',
     },
   })
 
-  const onSubmit = async (data: NewUserFormData) => {
+  const onSubmit = async (data: CreateUserInput) => {
     setIsLoading(true)
 
     try {

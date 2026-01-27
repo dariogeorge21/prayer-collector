@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { BackgroundLayout } from '@/components/layout'
 import { 
@@ -11,10 +11,12 @@ import {
 } from '@/components/tracker'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
+import { validateDailyEntry, hasEntryData, isToday } from '@/lib/validations'
 import type { User, DailyEntry } from '@/lib/database.types'
-import { Trophy, Save, Loader2, CheckCircle2, Sparkles } from 'lucide-react'
+import { Trophy, Save, Loader2, CheckCircle2, Sparkles, WifiOff, AlertTriangle } from 'lucide-react'
 
 interface DailyTrackerPageProps {
   userId: string
@@ -29,6 +31,7 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isOnline, setIsOnline] = useState(true)
 
   // Form state
   const [rosaryCompleted, setRosaryCompleted] = useState(false)
@@ -37,6 +40,19 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
 
   // Track if form has changes
   const [hasChanges, setHasChanges] = useState(false)
+  
+  // Confirmation dialog state
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
+  const [showEmptyDataDialog, setShowEmptyDataDialog] = useState(false)
+  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false)
+  const pendingNavigationRef = useRef<string | null>(null)
+  
+  // Debounce/throttle rapid submissions
+  const lastSaveTimeRef = useRef<number>(0)
+  const saveThrottleMs = 2000 // Minimum 2 seconds between saves
+  
+  // Current date tracking
+  const [currentDate, setCurrentDate] = useState(() => new Date().toISOString().split('T')[0])
 
   const today = new Date()
   const todayStr = today.toISOString().split('T')[0]
@@ -98,7 +114,47 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
 
   useEffect(() => {
     fetchData()
-  }, [fetchData])
+    
+    // Check online status
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => {
+      setIsOnline(false)
+      toast({
+        variant: 'destructive',
+        title: 'You are offline',
+        description: 'Your changes will not be saved until you reconnect.',
+        duration: 5000,
+      })
+    }
+    
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    setIsOnline(navigator.onLine)
+    
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [fetchData, toast])
+  
+  // Monitor date changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newDate = new Date().toISOString().split('T')[0]
+      if (newDate !== currentDate) {
+        setCurrentDate(newDate)
+        // Notify user that date has changed
+        toast({
+          title: 'New day started! 🌅',
+          description: 'The date has changed. Refreshing your tracker...',
+        })
+        // Refresh data
+        fetchData()
+      }
+    }, 60000) // Check every minute
+    
+    return () => clearInterval(interval)
+  }, [currentDate, fetchData, toast])
 
   // Track changes
   useEffect(() => {
@@ -114,13 +170,58 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
     }
   }, [entry, rosaryCompleted, holyMassAttended, prayerTimeMinutes])
 
-  // Save/Update entry using upsert
-  const handleSave = async (navigateToLeaderboard: boolean = false) => {
+  // Save/Update entry using upsert with validation
+  const handleSave = async (navigateToLeaderboard: boolean = false, skipValidation: boolean = false) => {
     if (!user) return
+    
+    // Check online status
+    if (!isOnline) {
+      toast({
+        variant: 'destructive',
+        title: 'You are offline',
+        description: 'Please check your internet connection and try again.',
+      })
+      return
+    }
+    
+    // Throttle rapid submissions
+    const now = Date.now()
+    if (now - lastSaveTimeRef.current < saveThrottleMs) {
+      toast({
+        title: 'Please wait',
+        description: 'You are submitting too quickly. Please wait a moment.',
+      })
+      return
+    }
+    
+    // Validate entry data
+    if (!skipValidation) {
+      const validation = validateDailyEntry({
+        rosary_completed: rosaryCompleted,
+        holy_mass_attended: holyMassAttended,
+        prayer_time_minutes: prayerTimeMinutes,
+      })
+      
+      if (!validation.success) {
+        // Show empty data dialog
+        if (!hasEntryData({ rosary_completed: rosaryCompleted, holy_mass_attended: holyMassAttended, prayer_time_minutes: prayerTimeMinutes })) {
+          setShowEmptyDataDialog(true)
+          return
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: 'Validation Error',
+          description: validation.error,
+        })
+        return
+      }
+    }
 
     setIsSaving(true)
     setSaveSuccess(false)
     setError(null)
+    lastSaveTimeRef.current = now
 
     try {
       // Use upsert with ON CONFLICT handling
@@ -211,6 +312,45 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
       router.push(`/leaderboard/${userId}`)
     }
   }
+  
+  // Validate prayer time input
+  const handlePrayerTimeChange = (minutes: number) => {
+    // Clamp value between 0 and 1440 (24 hours)
+    const clampedMinutes = Math.max(0, Math.min(1440, Math.floor(minutes)))
+    
+    if (minutes > 1440) {
+      toast({
+        title: 'Maximum prayer time exceeded',
+        description: 'Prayer time cannot exceed 24 hours (1440 minutes) per day.',
+        variant: 'destructive',
+      })
+    }
+    
+    setPrayerTimeMinutes(clampedMinutes)
+  }
+  
+  // Handle navigation with unsaved changes
+  const handleNavigateWithCheck = (path: string) => {
+    if (hasChanges) {
+      pendingNavigationRef.current = path
+      setShowUnsavedDialog(true)
+    } else {
+      router.push(path)
+    }
+  }
+  
+  // Confirm navigation without saving
+  const handleConfirmNavigateWithoutSaving = () => {
+    if (pendingNavigationRef.current) {
+      router.push(pendingNavigationRef.current)
+      pendingNavigationRef.current = null
+    }
+  }
+  
+  // Confirm save with empty data
+  const handleConfirmSaveEmptyData = () => {
+    handleSave(false, true) // Skip validation
+  }
 
   // Calculate today's points
   const calculatePoints = () => {
@@ -258,6 +398,19 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
   return (
     <BackgroundLayout>
       <div className="pb-8 animate-fade-in-up">
+        {/* Offline Indicator */}
+        {!isOnline && (
+          <div className="mb-6 rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-center animate-fade-in">
+            <div className="flex items-center justify-center gap-2 text-yellow-800">
+              <WifiOff className="h-5 w-5" />
+              <span className="font-medium">You are offline</span>
+            </div>
+            <p className="text-sm text-yellow-700 mt-1">
+              Your changes cannot be saved until you reconnect to the internet.
+            </p>
+          </div>
+        )}
+        
         {/* Header */}
         <TrackerHeader userName={user.name} date={today} />
 
@@ -273,19 +426,19 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
           <RosaryCheckbox
             checked={rosaryCompleted}
             onCheckedChange={setRosaryCompleted}
-            disabled={isSaving}
+            disabled={isSaving || !isOnline}
           />
 
           <HolyMassCheckbox
             checked={holyMassAttended}
             onCheckedChange={setHolyMassAttended}
-            disabled={isSaving}
+            disabled={isSaving || !isOnline}
           />
 
           <PrayerTimer
             minutes={prayerTimeMinutes}
-            onMinutesChange={setPrayerTimeMinutes}
-            disabled={isSaving}
+            onMinutesChange={handlePrayerTimeChange}
+            disabled={isSaving || !isOnline}
           />
         </div>
 
@@ -323,7 +476,7 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
           <Button
             size="lg"
             onClick={() => handleSave(false)}
-            disabled={isSaving || !hasChanges}
+            disabled={isSaving || !hasChanges || !isOnline}
             className="gap-2 relative btn-bounce btn-glow"
           >
             {isSaving ? (
@@ -351,7 +504,7 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
             size="lg"
             variant="outline"
             onClick={handleSaveAndViewLeaderboard}
-            disabled={isSaving}
+            disabled={isSaving || !isOnline}
             className="gap-2 btn-bounce"
           >
             {isSaving ? (
@@ -378,6 +531,28 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
           </p>
         )}
       </div>
+      
+      {/* Confirmation Dialogs */}
+      <ConfirmDialog
+        open={showUnsavedDialog}
+        onOpenChange={setShowUnsavedDialog}
+        onConfirm={handleConfirmNavigateWithoutSaving}
+        title="Unsaved Changes"
+        description="You have unsaved changes. Are you sure you want to leave without saving?"
+        confirmText="Leave Without Saving"
+        cancelText="Stay"
+        variant="destructive"
+      />
+      
+      <ConfirmDialog
+        open={showEmptyDataDialog}
+        onOpenChange={setShowEmptyDataDialog}
+        onConfirm={handleConfirmSaveEmptyData}
+        title="No Activity Recorded"
+        description="You haven't completed any activities yet. Do you want to save an empty entry?"
+        confirmText="Save Anyway"
+        cancelText="Go Back"
+      />
     </BackgroundLayout>
   )
 }
