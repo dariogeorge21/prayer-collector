@@ -1,7 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Plus, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -13,66 +17,121 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@/lib/database.types'
+
+// Zod validation schema
+const newUserSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name must be less than 50 characters')
+    .trim()
+    .refine((val) => /^[a-zA-Z\s'-]+$/.test(val), {
+      message: 'Name can only contain letters, spaces, hyphens, and apostrophes',
+    }),
+  email: z
+    .string()
+    .email('Please enter a valid email address')
+    .optional()
+    .or(z.literal('')),
+})
+
+type NewUserFormData = z.infer<typeof newUserSchema>
 
 interface NewUserModalProps {
   onUserCreated: (user: User) => void
 }
 
 export function NewUserModal({ onUserCreated }: NewUserModalProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [createdUser, setCreatedUser] = useState<User | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!name.trim()) {
-      setError('Name is required')
-      return
-    }
+  const form = useForm<NewUserFormData>({
+    resolver: zodResolver(newUserSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+    },
+  })
 
+  const onSubmit = async (data: NewUserFormData) => {
     setIsLoading(true)
-    setError(null)
 
     try {
-      const { data, error: supabaseError } = await supabase
+      const { data: userData, error: supabaseError } = await supabase
         .from('users')
         .insert({
-          name: name.trim(),
-          email: email.trim() || null,
+          name: data.name.trim(),
+          email: data.email?.trim() || null,
         })
         .select()
         .single()
 
       if (supabaseError) {
+        // Handle duplicate name error
         if (supabaseError.code === '23505') {
-          setError('A user with this name already exists')
+          form.setError('name', {
+            type: 'manual',
+            message: 'A soul with this name already exists. Please choose a different name.',
+          })
         } else {
-          setError(supabaseError.message)
+          form.setError('root', {
+            type: 'manual',
+            message: supabaseError.message,
+          })
         }
         return
       }
 
-      if (data) {
-        onUserCreated(data)
-        setOpen(false)
-        setName('')
-        setEmail('')
+      if (userData) {
+        setCreatedUser(userData)
+        setShowSuccess(true)
+        onUserCreated(userData)
+
+        // Auto-navigate after showing success message
+        setTimeout(() => {
+          setOpen(false)
+          setShowSuccess(false)
+          form.reset()
+          router.push(`/tracker/${userData.id}`)
+        }, 1500)
       }
     } catch (err) {
-      setError('An unexpected error occurred')
+      form.setError('root', {
+        type: 'manual',
+        message: 'An unexpected error occurred. Please try again.',
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Reset form when closing
+      form.reset()
+      setShowSuccess(false)
+      setCreatedUser(null)
+    }
+    setOpen(newOpen)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
@@ -80,46 +139,103 @@ export function NewUserModal({ onUserCreated }: NewUserModalProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Welcome, New Soul</DialogTitle>
-            <DialogDescription>
-              Enter your name to start tracking your spiritual journey.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isLoading}
-                autoFocus
-              />
+        {showSuccess ? (
+          // Success State
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="mb-4 rounded-full bg-green-100 p-3">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email (optional)</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-            {error && (
-              <p className="text-sm text-red-500">{error}</p>
-            )}
+            <h3 className="text-lg font-semibold text-gray-900">
+              Welcome, {createdUser?.name}!
+            </h3>
+            <p className="mt-2 text-center text-sm text-gray-500">
+              Your spiritual journey begins now.
+              <br />
+              Redirecting to your tracker...
+            </p>
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Begin Journey'}
-            </Button>
-          </DialogFooter>
-        </form>
+        ) : (
+          // Form State
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <DialogHeader>
+                <DialogTitle>Welcome, New Soul</DialogTitle>
+                <DialogDescription>
+                  Enter your name to start tracking your spiritual journey.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter your name"
+                          autoFocus
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        This will be displayed on the leaderboard.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Enter your email"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        For account recovery and notifications.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Root/Server Error */}
+                {form.formState.errors.root && (
+                  <div className="rounded-md bg-red-50 p-3">
+                    <p className="text-sm text-red-600">
+                      {form.formState.errors.root.message}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOpenChange(false)}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Creating...' : 'Begin Journey'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   )
