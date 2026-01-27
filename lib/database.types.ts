@@ -104,6 +104,28 @@ export interface Database {
         }
         Returns: number
       }
+      calculate_user_streak: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: number
+      }
+      get_leaderboard_with_streaks: {
+        Args: Record<string, never>
+        Returns: {
+          user_id: string
+          name: string
+          total_days_logged: number
+          rosary_days: number
+          mass_days: number
+          total_prayer_minutes: number
+          avg_prayer_minutes: number
+          total_score: number
+          last_activity_date: string | null
+          current_streak: number
+          rank: number
+        }[]
+      }
     }
     Enums: {}
     CompositeTypes: {}
