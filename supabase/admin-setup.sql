@@ -5,7 +5,7 @@
 
 -- Option 1: Create a new admin user
 INSERT INTO public.users (name, email, is_admin)
-VALUES ('Admin', 'admin@faithtracker.app', true)
+VALUES ('Dario', 'dario@eesho', true)
 ON CONFLICT (name) DO UPDATE SET is_admin = true;
 
 -- Option 2: Make an existing user an admin (replace 'John Doe' with actual name)

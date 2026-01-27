@@ -1,3 +1,5 @@
 export { ProtectedRoute } from './ProtectedRoute'
 export { AdminLoginModal } from './AdminLoginModal'
 export { AdminDashboardPage } from './AdminDashboardPage'
+export { UserStatsTable } from './UserStatsTable'
+export { TopScorersSection } from './TopScorersSection'

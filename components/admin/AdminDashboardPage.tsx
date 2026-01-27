@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute'
+import { UserStatsTable } from '@/components/admin/UserStatsTable'
+import { TopScorersSection } from '@/components/admin/TopScorersSection'
 import { useAdmin } from '@/contexts/AdminContext'
 import { useAdminStats } from '@/hooks/use-admin-stats'
 import { BackgroundLayout } from '@/components/layout'
@@ -255,6 +257,14 @@ function AdminDashboardContent() {
           <p className="mt-3 text-xs text-gray-400 text-center">
             Monthly stats for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </p>
+        </section>
+
+        {/* Top Scorers Section */}
+        <TopScorersSection />
+
+        {/* User Stats Table */}
+        <section className="mb-8">
+          <UserStatsTable />
         </section>
 
         {/* Admin Features Grid */}
