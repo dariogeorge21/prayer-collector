@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
 import { validateDailyEntry, hasEntryData, isToday } from '@/lib/validations'
 import type { User, DailyEntry } from '@/lib/database.types'
-import { Trophy, Save, Loader2, CheckCircle2, Sparkles, WifiOff, AlertTriangle } from 'lucide-react'
+import { Trophy, Save, Loader2, CheckCircle2, Sparkles, WifiOff, AlertTriangle, History } from 'lucide-react'
 
 interface DailyTrackerPageProps {
   userId: string
@@ -513,6 +513,16 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
               <Trophy className="h-4 w-4 transition-transform group-hover:scale-110" />
             )}
             {hasChanges ? 'Save & View Leaderboard' : 'View Leaderboard'}
+          </Button>
+
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => router.push(`/history/${userId}`)}
+            className="gap-2 btn-bounce"
+          >
+            <History className="h-4 w-4" />
+            View History
           </Button>
         </div>
 

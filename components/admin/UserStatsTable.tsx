@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useUserStats, type SortField } from '@/hooks/use-user-stats'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,10 +30,12 @@ import {
   Flame,
   Shield,
   Users,
+  Eye,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function UserStatsTable() {
+  const router = useRouter()
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebounce(searchInput, 300)
 
@@ -122,6 +125,7 @@ export function UserStatsTable() {
           <TableCell className="text-center"><Skeleton className="h-5 w-8 mx-auto" /></TableCell>
           <TableCell className="text-center"><Skeleton className="h-5 w-12 mx-auto" /></TableCell>
           <TableCell className="text-center"><Skeleton className="h-5 w-8 mx-auto" /></TableCell>
+          <TableCell className="text-center"><Skeleton className="h-5 w-20 mx-auto" /></TableCell>
         </TableRow>
       ))}
     </>
@@ -184,6 +188,7 @@ export function UserStatsTable() {
                 <SortableHeader field="total_masses" className="text-center">Masses</SortableHeader>
                 <SortableHeader field="total_prayer_minutes" className="text-center">Prayer Time</SortableHeader>
                 <SortableHeader field="current_streak" className="text-center">Streak</SortableHeader>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -191,7 +196,7 @@ export function UserStatsTable() {
                 <LoadingSkeleton />
               ) : users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     {searchInput ? 'No users found matching your search.' : 'No users found.'}
                   </TableCell>
                 </TableRow>
@@ -233,6 +238,17 @@ export function UserStatsTable() {
                         {user.current_streak}
                         {user.current_streak >= 7 && <Flame className="h-4 w-4" />}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/admin/user/${user.id}`)}
+                        className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
