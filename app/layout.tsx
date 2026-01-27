@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
+import { AdminProvider } from '@/contexts/AdminContext'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -22,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-white font-sans antialiased">
-        {children}
-        <Toaster />
+        <AdminProvider>
+          {children}
+          <Toaster />
+        </AdminProvider>
       </body>
     </html>
   )
