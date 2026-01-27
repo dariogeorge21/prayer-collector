@@ -11,9 +11,10 @@ import {
 } from '@/components/tracker'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
 import type { User, DailyEntry } from '@/lib/database.types'
-import { Trophy, Save, Loader2, CheckCircle2 } from 'lucide-react'
+import { Trophy, Save, Loader2, CheckCircle2, Sparkles } from 'lucide-react'
 
 interface DailyTrackerPageProps {
   userId: string
@@ -21,6 +22,7 @@ interface DailyTrackerPageProps {
 
 export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [user, setUser] = useState<User | null>(null)
   const [entry, setEntry] = useState<DailyEntry | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -32,6 +34,9 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
   const [rosaryCompleted, setRosaryCompleted] = useState(false)
   const [holyMassAttended, setHolyMassAttended] = useState(false)
   const [prayerTimeMinutes, setPrayerTimeMinutes] = useState(0)
+
+  // Track if form has changes
+  const [hasChanges, setHasChanges] = useState(false)
 
   const today = new Date()
   const todayStr = today.toISOString().split('T')[0]
@@ -81,17 +86,36 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
     } catch (err) {
       console.error('Error fetching data:', err)
       setError('Failed to load data. Please try again.')
+      toast({
+        variant: 'destructive',
+        title: 'Error loading data',
+        description: 'Could not load your tracker. Please refresh the page.',
+      })
     } finally {
       setIsLoading(false)
     }
-  }, [userId, todayStr])
+  }, [userId, todayStr, toast])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
 
-  // Save/Update entry
-  const handleSave = async () => {
+  // Track changes
+  useEffect(() => {
+    if (entry) {
+      const changed = 
+        rosaryCompleted !== entry.rosary_completed ||
+        holyMassAttended !== entry.holy_mass_attended ||
+        prayerTimeMinutes !== entry.prayer_time_minutes
+      setHasChanges(changed)
+    } else {
+      // New entry - has changes if any field is set
+      setHasChanges(rosaryCompleted || holyMassAttended || prayerTimeMinutes > 0)
+    }
+  }, [entry, rosaryCompleted, holyMassAttended, prayerTimeMinutes])
+
+  // Save/Update entry using upsert
+  const handleSave = async (navigateToLeaderboard: boolean = false) => {
     if (!user) return
 
     setIsSaving(true)
@@ -99,43 +123,92 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
     setError(null)
 
     try {
-      if (entry) {
-        // Update existing entry
-        const { error: updateError } = await supabase
-          .from('daily_entries')
-          .update({
-            rosary_completed: rosaryCompleted,
-            holy_mass_attended: holyMassAttended,
-            prayer_time_minutes: prayerTimeMinutes,
-          })
-          .eq('id', entry.id)
-
-        if (updateError) throw updateError
-      } else {
-        // Create new entry
-        const { data: newEntry, error: insertError } = await supabase
-          .from('daily_entries')
-          .insert({
+      // Use upsert with ON CONFLICT handling
+      const { data: upsertedEntry, error: upsertError } = await supabase
+        .from('daily_entries')
+        .upsert(
+          {
+            id: entry?.id, // Include existing ID if updating
             user_id: userId,
             entry_date: todayStr,
             rosary_completed: rosaryCompleted,
             holy_mass_attended: holyMassAttended,
             prayer_time_minutes: prayerTimeMinutes,
-          })
-          .select()
-          .single()
+          },
+          {
+            onConflict: 'user_id,entry_date', // Handle unique constraint
+            ignoreDuplicates: false, // Update on conflict
+          }
+        )
+        .select()
+        .single()
 
-        if (insertError) throw insertError
-        setEntry(newEntry)
+      if (upsertError) {
+        // Handle specific error cases
+        if (upsertError.code === '23505') {
+          // Unique constraint violation - try update instead
+          const { data: updatedEntry, error: updateError } = await supabase
+            .from('daily_entries')
+            .update({
+              rosary_completed: rosaryCompleted,
+              holy_mass_attended: holyMassAttended,
+              prayer_time_minutes: prayerTimeMinutes,
+            })
+            .eq('user_id', userId)
+            .eq('entry_date', todayStr)
+            .select()
+            .single()
+
+          if (updateError) throw updateError
+          setEntry(updatedEntry)
+        } else {
+          throw upsertError
+        }
+      } else {
+        setEntry(upsertedEntry)
       }
 
       setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      setHasChanges(false)
+
+      // Calculate points for toast message
+      const points = calculatePoints()
+
+      // Show success toast
+      toast({
+        title: '🙏 Progress Saved!',
+        description: `Your spiritual journey has been recorded. You earned ${points} points today!`,
+      })
+
+      if (navigateToLeaderboard) {
+        // Navigate to leaderboard after a short delay
+        setTimeout(() => {
+          router.push(`/leaderboard/${userId}`)
+        }, 500)
+      } else {
+        // Reset success state after delay
+        setTimeout(() => setSaveSuccess(false), 3000)
+      }
     } catch (err) {
       console.error('Error saving entry:', err)
       setError('Failed to save. Please try again.')
+      
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: 'Could not save your progress. Please try again.',
+      })
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  // Save and navigate to leaderboard
+  const handleSaveAndViewLeaderboard = async () => {
+    if (hasChanges) {
+      await handleSave(true)
+    } else {
+      router.push(`/leaderboard/${userId}`)
     }
   }
 
@@ -235,6 +308,13 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
                 <div className="text-sm text-gray-500">points</div>
               </div>
             </div>
+            
+            {/* Progress indicators */}
+            <div className="mt-4 flex gap-2">
+              <div className={`flex-1 h-2 rounded-full transition-colors ${rosaryCompleted ? 'bg-amber-400' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-2 rounded-full transition-colors ${holyMassAttended ? 'bg-purple-400' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-2 rounded-full transition-colors ${prayerTimeMinutes > 0 ? 'bg-blue-400' : 'bg-gray-200'}`} />
+            </div>
           </CardContent>
         </Card>
 
@@ -242,9 +322,9 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button
             size="lg"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="gap-2"
+            onClick={() => handleSave(false)}
+            disabled={isSaving || !hasChanges}
+            className="gap-2 relative"
           >
             {isSaving ? (
               <>
@@ -262,23 +342,39 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
                 Save Progress
               </>
             )}
+            {hasChanges && !isSaving && !saveSuccess && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-500 animate-pulse" />
+            )}
           </Button>
 
           <Button
             size="lg"
             variant="outline"
-            onClick={() => router.push(`/leaderboard/${userId}`)}
+            onClick={handleSaveAndViewLeaderboard}
+            disabled={isSaving}
             className="gap-2"
           >
-            <Trophy className="h-4 w-4" />
-            View Leaderboard
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trophy className="h-4 w-4" />
+            )}
+            {hasChanges ? 'Save & View Leaderboard' : 'View Leaderboard'}
           </Button>
         </div>
 
+        {/* Unsaved Changes Indicator */}
+        {hasChanges && (
+          <p className="mt-3 text-center text-sm text-amber-600 flex items-center justify-center gap-1">
+            <Sparkles className="h-4 w-4" />
+            You have unsaved changes
+          </p>
+        )}
+
         {/* Entry Status */}
-        {entry && (
+        {entry && !hasChanges && (
           <p className="mt-4 text-center text-sm text-gray-500">
-            Entry last updated: {new Date(entry.updated_at).toLocaleTimeString()}
+            Last saved: {new Date(entry.updated_at).toLocaleTimeString()}
           </p>
         )}
       </div>
