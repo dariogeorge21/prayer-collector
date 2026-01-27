@@ -156,17 +156,17 @@ export function PrayerTimer({
   const colors = stateColors[timerState]
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm transition-all hover:shadow-md overflow-hidden">
+    <Card className="bg-white/90 backdrop-blur-sm card-interactive overflow-hidden">
       <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-300",
-            timerState === 'running' ? 'bg-blue-100' : timerState === 'paused' ? 'bg-amber-100' : 'bg-gray-100'
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-300",
+            timerState === 'running' ? 'bg-blue-100 scale-110' : timerState === 'paused' ? 'bg-amber-100' : 'bg-gray-100'
           )}>
             <Clock className={cn(
-              "h-5 w-5 transition-colors duration-300",
-              timerState === 'running' ? 'text-blue-600' : timerState === 'paused' ? 'text-amber-600' : 'text-gray-600'
+              "h-5 w-5 transition-all duration-300",
+              timerState === 'running' ? 'text-blue-600 animate-pulse-soft' : timerState === 'paused' ? 'text-amber-600' : 'text-gray-600'
             )} />
           </div>
           <div>
@@ -178,9 +178,10 @@ export function PrayerTimer({
         {/* Circular Timer Display */}
         <div className="flex justify-center my-8">
           <div className={cn(
-            "relative w-52 h-52 rounded-full transition-all duration-500",
+            "relative w-52 h-52 rounded-full transition-all duration-500 ease-out",
             colors.bg,
-            colors.glow
+            colors.glow,
+            timerState === 'running' && 'scale-105'
           )}>
             {/* SVG Progress Ring */}
             <svg className="absolute inset-0 w-full h-full -rotate-90 transform">
@@ -252,7 +253,7 @@ export function PrayerTimer({
               size="lg"
               onClick={handlePause}
               disabled={disabled}
-              className="gap-2 border-amber-300 text-amber-600 hover:bg-amber-50 hover:text-amber-700 transition-all duration-200"
+              className="gap-2 border-amber-300 text-amber-600 hover:bg-amber-50 hover:text-amber-700 transition-all duration-200 btn-bounce"
             >
               <Pause className="h-5 w-5" />
               Pause
@@ -263,7 +264,7 @@ export function PrayerTimer({
               size="lg"
               onClick={handleStart}
               disabled={disabled}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
+              className="gap-2 bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105 active:scale-95 btn-glow"
             >
               <Play className="h-5 w-5" />
               {timerState === 'paused' ? 'Resume' : 'Start'}
@@ -276,7 +277,7 @@ export function PrayerTimer({
             size="lg"
             onClick={handleReset}
             disabled={disabled || (timerState === 'idle' && totalSeconds === 0)}
-            className="gap-2 transition-all duration-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50"
+            className="gap-2 transition-all duration-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50 btn-bounce"
           >
             <RotateCcw className="h-5 w-5" />
             Reset

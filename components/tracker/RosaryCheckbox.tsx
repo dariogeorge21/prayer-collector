@@ -16,11 +16,11 @@ export function RosaryCheckbox({
   disabled 
 }: RosaryCheckboxProps) {
   return (
-    <Card className="bg-white/90 backdrop-blur-sm transition-all hover:shadow-md">
+    <Card className="bg-white/90 backdrop-blur-sm card-interactive">
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           {/* Icon */}
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 text-2xl">
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 text-2xl transition-transform duration-300 ${checked ? 'scale-110' : ''}`}>
             📿
           </div>
           
@@ -44,14 +44,14 @@ export function RosaryCheckbox({
                 checked={checked}
                 onCheckedChange={(value) => onCheckedChange(value === true)}
                 disabled={disabled}
-                className="h-6 w-6 rounded-md"
+                className="h-6 w-6 rounded-md checkbox-animated transition-all duration-200 data-[state=checked]:animate-check-bounce"
               />
             </div>
           </div>
         </div>
         
         {checked && (
-          <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+          <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 animate-fade-in-up">
             ✨ Wonderful! The Rosary is a powerful prayer. +10 points
           </div>
         )}

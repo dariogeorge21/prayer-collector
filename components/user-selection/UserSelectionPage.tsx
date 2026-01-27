@@ -70,11 +70,11 @@ export function UserSelectionPage() {
 
   return (
     <BackgroundLayout>
-      <div className="flex min-h-[90vh] flex-col">
+      <div className="flex min-h-[90vh] flex-col animate-fade-in-up">
         {/* Header */}
         <header className="mb-8 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-            ✝️ Faith Tracker
+            <span className="inline-block animate-bounce-subtle">✝️</span> Faith Tracker
           </h1>
           <p className="mt-3 text-lg text-gray-600">
             Track your spiritual journey with daily prayers and devotions
@@ -98,11 +98,11 @@ export function UserSelectionPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 rounded-lg bg-red-50 p-4 text-center text-red-600">
+              <div className="mb-6 rounded-lg bg-red-50 p-4 text-center text-red-600 animate-fade-in">
                 {error}
                 <button
                   onClick={fetchUsers}
-                  className="ml-2 underline hover:no-underline"
+                  className="ml-2 underline hover:no-underline btn-bounce"
                 >
                   Retry
                 </button>
@@ -118,7 +118,7 @@ export function UserSelectionPage() {
 
             {/* User Count */}
             {!isLoading && users.length > 0 && (
-              <p className="mt-6 text-center text-sm text-gray-500">
+              <p className="mt-6 text-center text-sm text-gray-500 animate-fade-in">
                 {filteredUsers.length === users.length
                   ? `${users.length} soul${users.length === 1 ? '' : 's'} registered`
                   : `Showing ${filteredUsers.length} of ${users.length} souls`}

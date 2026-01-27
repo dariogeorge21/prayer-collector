@@ -66,3 +66,87 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Page transition animations */
+@layer utilities {
+  .page-transition {
+    @apply animate-fade-in-up;
+  }
+  
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+  .stagger-5 { animation-delay: 250ms; }
+}
+
+/* Card hover effects */
+@layer components {
+  .card-interactive {
+    @apply transition-all duration-200 ease-out;
+    @apply hover:shadow-lg hover:-translate-y-0.5;
+    @apply active:scale-[0.99] active:shadow-md;
+  }
+  
+  .card-highlight {
+    @apply transition-all duration-300;
+    @apply hover:ring-2 hover:ring-primary/20;
+  }
+}
+
+/* Button animations */
+@layer components {
+  .btn-bounce {
+    @apply transition-transform duration-150;
+    @apply active:scale-95;
+  }
+  
+  .btn-glow {
+    @apply transition-shadow duration-200;
+    @apply hover:shadow-[0_0_15px_rgba(59,130,246,0.4)];
+  }
+}
+
+/* Checkbox animation */
+@layer components {
+  .checkbox-animated {
+    @apply transition-all duration-200;
+  }
+  
+  .checkbox-animated[data-state="checked"] {
+    @apply animate-check-bounce;
+  }
+}
+
+/* Timer pulse animation */
+@layer components {
+  .timer-running {
+    @apply animate-pulse-soft;
+  }
+}
+
+/* Toast slide-in enhancement */
+[data-sonner-toaster] [data-sonner-toast] {
+  @apply animate-slide-in-right;
+}
+
+/* Smooth color transitions */
+.color-transition {
+  @apply transition-colors duration-300 ease-out;
+}
+
+/* Rank row highlight animation */
+.rank-highlight-animation {
+  animation: rank-highlight 1.5s ease-out;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

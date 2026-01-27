@@ -51,8 +51,17 @@ export function UserList({ users, isLoading, searchQuery }: UserListProps) {
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {users.map((user) => (
-        <UserCard key={user.id} user={user} />
+      {users.map((user, index) => (
+        <div 
+          key={user.id}
+          className="animate-fade-in-up"
+          style={{
+            animationDelay: `${index * 50}ms`,
+            animationFillMode: 'both',
+          }}
+        >
+          <UserCard user={user} />
+        </div>
       ))}
     </div>
   )

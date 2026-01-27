@@ -76,7 +76,7 @@ function LeaderboardCard({
   isLoading,
 }: LeaderboardCardProps) {
   return (
-    <Card className="h-full">
+    <Card className="h-full card-interactive">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           {icon}
@@ -100,15 +100,19 @@ function LeaderboardCard({
           </div>
         ) : (
           <div className="space-y-2">
-            {data.map((scorer) => (
+            {data.map((scorer, index) => (
               <div
                 key={scorer.user_id}
                 className={cn(
-                  "flex items-center gap-3 p-2 rounded-lg transition-colors",
+                  "flex items-center gap-3 p-2 rounded-lg transition-all hover:scale-[1.02] animate-fade-in-up",
                   scorer.rank === 1 && "bg-yellow-50/50",
                   scorer.rank === 2 && "bg-gray-50/50",
                   scorer.rank === 3 && "bg-amber-50/50"
                 )}
+                style={{
+                  animationDelay: `${index * 80}ms`,
+                  animationFillMode: 'both',
+                }}
               >
                 <RankBadge rank={scorer.rank} />
                 <span className="flex-1 font-medium text-gray-900 truncate">
@@ -154,36 +158,42 @@ export function TopScorersSection() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Most Consistent */}
-        <LeaderboardCard
-          title="Most Consistent"
-          icon={<Flame className="h-5 w-5 text-orange-500" />}
-          data={data.mostConsistent}
-          valueFormatter={(v) => v.toString()}
-          valueSuffix="days"
-          accentColor="bg-orange-100 text-orange-700"
-          isLoading={isLoading}
-        />
+        <div className="animate-fade-in-up" style={{ animationDelay: '0ms', animationFillMode: 'both' }}>
+          <LeaderboardCard
+            title="Most Consistent"
+            icon={<Flame className="h-5 w-5 text-orange-500" />}
+            data={data.mostConsistent}
+            valueFormatter={(v) => v.toString()}
+            valueSuffix="days"
+            accentColor="bg-orange-100 text-orange-700"
+            isLoading={isLoading}
+          />
+        </div>
 
         {/* Most Prayer Time */}
-        <LeaderboardCard
-          title="Most Prayer Time"
-          icon={<Clock className="h-5 w-5 text-blue-500" />}
-          data={data.mostPrayerTime}
-          valueFormatter={formatPrayerTime}
-          accentColor="bg-blue-100 text-blue-700"
-          isLoading={isLoading}
-        />
+        <div className="animate-fade-in-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+          <LeaderboardCard
+            title="Most Prayer Time"
+            icon={<Clock className="h-5 w-5 text-blue-500" />}
+            data={data.mostPrayerTime}
+            valueFormatter={formatPrayerTime}
+            accentColor="bg-blue-100 text-blue-700"
+            isLoading={isLoading}
+          />
+        </div>
 
         {/* Most Active This Week */}
-        <LeaderboardCard
-          title="Most Active This Week"
-          icon={<CalendarDays className="h-5 w-5 text-green-500" />}
-          data={data.mostActiveThisWeek}
-          valueFormatter={(v) => v.toString()}
-          valueSuffix="pts"
-          accentColor="bg-green-100 text-green-700"
-          isLoading={isLoading}
-        />
+        <div className="animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+          <LeaderboardCard
+            title="Most Active This Week"
+            icon={<CalendarDays className="h-5 w-5 text-green-500" />}
+            data={data.mostActiveThisWeek}
+            valueFormatter={(v) => v.toString()}
+            valueSuffix="pts"
+            accentColor="bg-green-100 text-green-700"
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* Legend */}

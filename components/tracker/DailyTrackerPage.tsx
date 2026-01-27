@@ -257,13 +257,13 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
 
   return (
     <BackgroundLayout>
-      <div className="pb-8">
+      <div className="pb-8 animate-fade-in-up">
         {/* Header */}
         <TrackerHeader userName={user.name} date={today} />
 
         {/* Error Alert */}
         {error && error !== 'User not found' && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-center text-red-600">
+          <div className="mb-6 rounded-lg bg-red-50 p-4 text-center text-red-600 animate-fade-in">
             {error}
           </div>
         )}
@@ -290,7 +290,7 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
         </div>
 
         {/* Today's Summary */}
-        <Card className="mt-6 bg-gradient-to-r from-amber-50 to-purple-50 border-none">
+        <Card className="mt-6 bg-gradient-to-r from-amber-50 to-purple-50 border-none card-interactive">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -302,7 +302,7 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-primary">
+                <div className="text-3xl font-bold text-primary transition-transform duration-300 hover:scale-110">
                   {calculatePoints()}
                 </div>
                 <div className="text-sm text-gray-500">points</div>
@@ -311,9 +311,9 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
             
             {/* Progress indicators */}
             <div className="mt-4 flex gap-2">
-              <div className={`flex-1 h-2 rounded-full transition-colors ${rosaryCompleted ? 'bg-amber-400' : 'bg-gray-200'}`} />
-              <div className={`flex-1 h-2 rounded-full transition-colors ${holyMassAttended ? 'bg-purple-400' : 'bg-gray-200'}`} />
-              <div className={`flex-1 h-2 rounded-full transition-colors ${prayerTimeMinutes > 0 ? 'bg-blue-400' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-2 rounded-full transition-all duration-500 ${rosaryCompleted ? 'bg-amber-400 scale-y-125' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-2 rounded-full transition-all duration-500 ${holyMassAttended ? 'bg-purple-400 scale-y-125' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-2 rounded-full transition-all duration-500 ${prayerTimeMinutes > 0 ? 'bg-blue-400 scale-y-125' : 'bg-gray-200'}`} />
             </div>
           </CardContent>
         </Card>
@@ -324,7 +324,7 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
             size="lg"
             onClick={() => handleSave(false)}
             disabled={isSaving || !hasChanges}
-            className="gap-2 relative"
+            className="gap-2 relative btn-bounce btn-glow"
           >
             {isSaving ? (
               <>
@@ -352,12 +352,12 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
             variant="outline"
             onClick={handleSaveAndViewLeaderboard}
             disabled={isSaving}
-            className="gap-2"
+            className="gap-2 btn-bounce"
           >
             {isSaving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Trophy className="h-4 w-4" />
+              <Trophy className="h-4 w-4 transition-transform group-hover:scale-110" />
             )}
             {hasChanges ? 'Save & View Leaderboard' : 'View Leaderboard'}
           </Button>
@@ -365,15 +365,15 @@ export function DailyTrackerPage({ userId }: DailyTrackerPageProps) {
 
         {/* Unsaved Changes Indicator */}
         {hasChanges && (
-          <p className="mt-3 text-center text-sm text-amber-600 flex items-center justify-center gap-1">
-            <Sparkles className="h-4 w-4" />
+          <p className="mt-3 text-center text-sm text-amber-600 flex items-center justify-center gap-1 animate-fade-in">
+            <Sparkles className="h-4 w-4 animate-pulse" />
             You have unsaved changes
           </p>
         )}
 
         {/* Entry Status */}
         {entry && !hasChanges && (
-          <p className="mt-4 text-center text-sm text-gray-500">
+          <p className="mt-4 text-center text-sm text-gray-500 animate-fade-in">
             Last saved: {new Date(entry.updated_at).toLocaleTimeString()}
           </p>
         )}

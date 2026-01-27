@@ -127,7 +127,7 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
 
   return (
     <BackgroundLayout>
-      <div className="pb-8">
+      <div className="pb-8 animate-fade-in-up">
         {/* Header */}
         <header className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -135,7 +135,7 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
               variant="ghost"
               size="sm"
               onClick={() => router.push(`/tracker/${userId}`)}
-              className="-ml-2 text-gray-600 hover:text-gray-900"
+              className="-ml-2 text-gray-600 hover:text-gray-900 btn-bounce"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Tracker
@@ -146,7 +146,7 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
               size="sm"
               onClick={refresh}
               disabled={isValidating}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 hover:text-gray-900 btn-bounce"
             >
               <RefreshCw className={cn("h-4 w-4 mr-2", isValidating && "animate-spin")} />
               {isValidating ? 'Updating...' : 'Refresh'}
@@ -155,7 +155,7 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
 
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl flex items-center justify-center gap-3">
-              <Trophy className="h-8 w-8 text-yellow-500" />
+              <Trophy className="h-8 w-8 text-yellow-500 animate-bounce-subtle" />
               Prayer Warriors
             </h1>
             <p className="mt-2 text-gray-600">
@@ -185,35 +185,35 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
           <>
             {/* Current User Stats Card */}
             {currentUserStats && (
-              <Card className="mb-6 bg-gradient-to-r from-primary/5 to-purple-500/5 border-primary/20">
+              <Card className="mb-6 bg-gradient-to-r from-primary/5 to-purple-500/5 border-primary/20 card-interactive animate-scale-in">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary transition-transform duration-300 hover:scale-110">
                         #{currentUserRank}
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                           {currentUserStats.name}
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 animate-pulse-soft" />
                         </h3>
                         <p className="text-sm text-gray-500">Your current ranking</p>
                       </div>
                     </div>
                     
                     <div className="flex gap-6 text-center">
-                      <div>
+                      <div className="transition-transform duration-300 hover:scale-105">
                         <div className="text-2xl font-bold text-primary">{currentUserStats.total_score}</div>
                         <div className="text-xs text-gray-500">Total Points</div>
                       </div>
-                      <div>
+                      <div className="transition-transform duration-300 hover:scale-105">
                         <div className="text-2xl font-bold text-amber-500 flex items-center justify-center gap-1">
                           {currentUserStats.current_streak}
                           <Flame className="h-5 w-5" />
                         </div>
                         <div className="text-xs text-gray-500">Day Streak</div>
                       </div>
-                      <div>
+                      <div className="transition-transform duration-300 hover:scale-105">
                         <div className="text-2xl font-bold text-blue-500">{formatPrayerTime(currentUserStats.total_prayer_minutes)}</div>
                         <div className="text-xs text-gray-500">Prayer Time</div>
                       </div>
@@ -224,7 +224,7 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
             )}
 
             {/* Leaderboard Table */}
-            <Card className="bg-white/90 backdrop-blur-sm">
+            <Card className="bg-white/90 backdrop-blur-sm card-interactive">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
@@ -276,14 +276,14 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
                           <TableRow
                             key={entry.user_id}
                             className={cn(
-                              'transition-all duration-300 animate-in fade-in slide-in-from-left-2',
-                              isCurrentUser && 'bg-primary/5 hover:bg-primary/10 border-l-4 border-l-primary',
+                              'transition-all duration-300 animate-fade-in-up hover:scale-[1.01]',
+                              isCurrentUser && 'bg-primary/5 hover:bg-primary/10 border-l-4 border-l-primary rank-highlight-animation',
                               !isCurrentUser && index === 0 && 'bg-yellow-50/50',
                               !isCurrentUser && index === 1 && 'bg-gray-50/50',
                               !isCurrentUser && index === 2 && 'bg-amber-50/50'
                             )}
                             style={{
-                              animationDelay: `${index * 50}ms`,
+                              animationDelay: `${index * 80}ms`,
                               animationFillMode: 'both',
                             }}
                           >

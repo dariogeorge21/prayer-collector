@@ -159,7 +159,7 @@ function AdminDashboardContent() {
 
   return (
     <BackgroundLayout>
-      <div className="pb-8">
+      <div className="pb-8 animate-fade-in-up">
         {/* Header */}
         <header className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -167,7 +167,7 @@ function AdminDashboardContent() {
               variant="ghost"
               size="sm"
               onClick={() => router.push('/')}
-              className="-ml-2 text-gray-600 hover:text-gray-900"
+              className="-ml-2 text-gray-600 hover:text-gray-900 btn-bounce"
             >
               <Home className="mr-2 h-4 w-4" />
               Back to Home
@@ -177,7 +177,7 @@ function AdminDashboardContent() {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 btn-bounce"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Logout
@@ -186,7 +186,7 @@ function AdminDashboardContent() {
 
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl flex items-center justify-center gap-3">
-              <Shield className="h-8 w-8 text-primary" />
+              <Shield className="h-8 w-8 text-primary animate-pulse-soft" />
               Admin Dashboard
             </h1>
             <p className="mt-2 text-gray-600">
@@ -215,14 +215,18 @@ function AdminDashboardContent() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {statCards.map((stat) => (
+            {statCards.map((stat, index) => (
               <Card 
                 key={stat.title} 
                 className={cn(
-                  "relative overflow-hidden transition-all hover:shadow-md",
+                  "relative overflow-hidden transition-all hover:shadow-md card-interactive animate-fade-in-up",
                   stat.borderColor,
                   "border-l-4"
                 )}
+                style={{
+                  animationDelay: `${index * 80}ms`,
+                  animationFillMode: 'both',
+                }}
               >
                 <CardContent className="p-4">
                   {statsLoading ? (
@@ -269,14 +273,18 @@ function AdminDashboardContent() {
 
         {/* Admin Features Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          {adminFeatures.map((feature) => (
+          {adminFeatures.map((feature, index) => (
             <Card
               key={feature.title}
-              className="cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]"
+              className="cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] card-interactive animate-fade-in-up"
               onClick={() => router.push(feature.href)}
+              style={{
+                animationDelay: `${index * 100}ms`,
+                animationFillMode: 'both',
+              }}
             >
               <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                <div className={`p-3 rounded-lg ${feature.bgColor}`}>
+                <div className={`p-3 rounded-lg ${feature.bgColor} transition-transform group-hover:scale-110`}>
                   <feature.icon className={`h-6 w-6 ${feature.color}`} />
                 </div>
                 <div>
