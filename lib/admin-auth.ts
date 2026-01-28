@@ -33,7 +33,7 @@ export async function loginAsAdmin(
       .from('users')
       .select('id, name, is_admin')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
     if (userError || !user) {
       return { success: false, error: 'User not found' }
@@ -81,7 +81,7 @@ export async function loginWithPasswordOnly(
       .select('id, name, is_admin')
       .eq('is_admin', true)
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (adminError || !adminUser) {
       return { success: false, error: 'No admin users found. Please set up an admin user first.' }
@@ -149,7 +149,7 @@ export async function checkIsAdmin(userId: string): Promise<boolean> {
       .from('users')
       .select('is_admin')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
     if (error || !data) return false
     return data.is_admin === true
