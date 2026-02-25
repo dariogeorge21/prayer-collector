@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useCallback, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { BackgroundLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
@@ -24,9 +25,12 @@ import {
   Crown,
   Star,
   RefreshCw,
-  Users
+  Users,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ContributionHeatmap } from './ContributionHeatmap'
 
 interface LeaderboardPageProps {
   userId: string
@@ -43,6 +47,21 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
     error,
     refresh,
   } = useLeaderboard({ userId, refreshInterval: 5 * 60 * 1000 }) // 5 minutes cache
+
+  // Heatmap expansion state (lazy-loaded per user)
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set())
+
+  const toggleUserExpansion = useCallback((targetUserId: string) => {
+    setExpandedUsers(prev => {
+      const next = new Set(prev)
+      if (next.has(targetUserId)) {
+        next.delete(targetUserId)
+      } else {
+        next.add(targetUserId)
+      }
+      return next
+    })
+  }, [])
 
   // Format minutes to hours and minutes
   const formatPrayerTime = (minutes: number) => {
@@ -223,6 +242,25 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
               </Card>
             )}
 
+            {/* Current User Contribution Heatmap */}
+            {currentUserStats && (
+              <Card className="mb-6 bg-white/90 backdrop-blur-sm animate-scale-in">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-blue-500" />
+                    Your Prayer Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ContributionHeatmap
+                    userId={userId}
+                    userName={currentUserStats.name}
+                    currentStreak={currentUserStats.current_streak}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Leaderboard Table */}
             <Card className="bg-white/90 backdrop-blur-sm card-interactive">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -272,9 +310,10 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
                     <TableBody>
                       {leaderboard.slice(0, 10).map((entry, index) => {
                         const isCurrentUser = entry.user_id === userId
+                        const isExpanded = expandedUsers.has(entry.user_id)
                         return (
+                          <Fragment key={entry.user_id}>
                           <TableRow
-                            key={entry.user_id}
                             className={cn(
                               'transition-all duration-300 animate-fade-in-up hover:scale-[1.01]',
                               isCurrentUser && 'bg-primary/5 hover:bg-primary/10 border-l-4 border-l-primary rank-highlight-animation',
@@ -294,6 +333,21 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleUserExpansion(entry.user_id)
+                                  }}
+                                  className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0"
+                                  aria-label={isExpanded ? `Collapse ${entry.name}'s contributions` : `View ${entry.name}'s contributions`}
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                                  )}
+                                </button>
                                 <span className={cn(
                                   'font-medium',
                                   isCurrentUser && 'text-primary'
@@ -328,6 +382,21 @@ export function LeaderboardPage({ userId }: LeaderboardPageProps) {
                               <span className="font-bold text-lg">{entry.total_score}</span>
                             </TableCell>
                           </TableRow>
+                          {isExpanded && (
+                            <TableRow className="hover:bg-transparent">
+                              <TableCell
+                                colSpan={6}
+                                className="px-4 py-4 bg-gray-50/50 dark:bg-gray-900/50 border-b"
+                              >
+                                <ContributionHeatmap
+                                  userId={entry.user_id}
+                                  userName={entry.name}
+                                  currentStreak={entry.current_streak}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          </Fragment>
                         )
                       })}
                     </TableBody>
