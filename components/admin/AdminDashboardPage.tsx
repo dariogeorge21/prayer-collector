@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute'
 import { UserStatsTable } from '@/components/admin/UserStatsTable'
 import { TopScorersSection } from '@/components/admin/TopScorersSection'
+import { ResetDataSection } from '@/components/admin/ResetDataSection'
 import { useAdmin } from '@/contexts/AdminContext'
 import { useAdminStats } from '@/hooks/use-admin-stats'
 import { BackgroundLayout } from '@/components/layout'
@@ -317,6 +318,15 @@ function AdminDashboardContent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Reset Data Section */}
+        <section className="mt-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-red-600" />
+            Dangerous Actions
+          </h2>
+          <ResetDataSection onResetComplete={refreshStats} />
+        </section>
 
         {/* Session Info */}
         <Card className="mt-6 bg-gray-50">
