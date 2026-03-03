@@ -15,6 +15,7 @@ export interface Database {
           name: string
           email: string | null
           is_admin: boolean
+          leaderboard_excluded: boolean
           created_at: string
         }
         Insert: {
@@ -22,6 +23,7 @@ export interface Database {
           name: string
           email?: string | null
           is_admin?: boolean
+          leaderboard_excluded?: boolean
           created_at?: string
         }
         Update: {
@@ -29,6 +31,7 @@ export interface Database {
           name?: string
           email?: string | null
           is_admin?: boolean
+          leaderboard_excluded?: boolean
           created_at?: string
         }
         Relationships: []
@@ -125,6 +128,17 @@ export interface Database {
           current_streak: number
           rank: number
         }[]
+      }
+      toggle_leaderboard_exclusion: {
+        Args: {
+          p_user_id: string
+          p_excluded: boolean
+        }
+        Returns: Json
+      }
+      reset_all_user_data: {
+        Args: Record<string, never>
+        Returns: Json
       }
     }
     Enums: {}

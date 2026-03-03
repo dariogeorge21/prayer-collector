@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/admin/ProtectedRoute'
 import { UserStatsTable } from '@/components/admin/UserStatsTable'
 import { TopScorersSection } from '@/components/admin/TopScorersSection'
 import { ResetDataSection } from '@/components/admin/ResetDataSection'
+import { AdminLeaderboardPodium } from '@/components/admin/AdminLeaderboardPodium'
 import { useAdmin } from '@/contexts/AdminContext'
 import { useAdminStats } from '@/hooks/use-admin-stats'
 import { BackgroundLayout } from '@/components/layout'
@@ -263,6 +264,9 @@ function AdminDashboardContent() {
             Monthly stats for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </p>
         </section>
+
+        {/* Admin Leaderboard Podium with exclusion controls */}
+        <AdminLeaderboardPodium />
 
         {/* Top Scorers Section */}
         <TopScorersSection />
