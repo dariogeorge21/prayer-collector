@@ -6,6 +6,7 @@ import { UserStatsTable } from '@/components/admin/UserStatsTable'
 import { TopScorersSection } from '@/components/admin/TopScorersSection'
 import { ResetDataSection } from '@/components/admin/ResetDataSection'
 import { AdminLeaderboardPodium } from '@/components/admin/AdminLeaderboardPodium'
+import { InactiveUsersSection } from '@/components/admin/InactiveUsersSection'
 import { useAdmin } from '@/contexts/AdminContext'
 import { useAdminStats } from '@/hooks/use-admin-stats'
 import { BackgroundLayout } from '@/components/layout'
@@ -270,6 +271,9 @@ function AdminDashboardContent() {
 
         {/* Top Scorers Section */}
         <TopScorersSection />
+
+        {/* Inactive Users Today */}
+        <InactiveUsersSection />
 
         {/* User Stats Table */}
         <section className="mb-8">
